@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Book and Checkout | Northline Rehab</title><meta name="description" content="Book a Northline Rehab program pack and check out online.">
+<meta property="og:title" content="Book and Checkout | Northline Rehab"><meta property="og:description" content="Book a Northline Rehab program pack and check out online."><meta property="og:type" content="website"><meta property="og:image" content="og-image.png"><meta property="og:url" content="https://brittanynation.github.io/northline-rehab/">
+<link rel="stylesheet" href="styles.css"><script src="data.js"></script></head><body>
+<header><div class="brand">Northline Rehab</div><nav><a href="index.html">Programs</a><a href="book.html">Book and Checkout</a><a href="visit.html">Visit and Workshops</a> <button class="btn gold" id="basketBtn">Plan (<span id="basketCount">0</span>)</button></nav></header>
+<section><h1>Book and checkout</h1><div id="checkoutItems"></div>
+<label>Promo code</label><input id="promo" placeholder="Try REHAB10"><button class="btn secondary" id="applyPromo">Apply promo</button><p id="promoMsg"></p>
+<div id="totals"></div>
+<form id="coForm" novalidate>
+<label>Full name</label><input id="fName"><div class="err" id="eName"></div>
+<label>Email</label><input id="fEmail" type="email"><div class="err" id="eEmail"></div>
+<label>Street address</label><input id="fAddr"><div class="err" id="eAddr"></div>
+<label>City</label><input id="fCity"><div class="err" id="eCity"></div>
+<label>ZIP</label><input id="fZip"><div class="err" id="eZip"></div>
+<label>Preferred first session date</label><input id="fDate" type="date"><div class="err" id="eDate"></div>
+<label>Card number</label><input id="fCard" inputmode="numeric"><div class="err" id="eCard"></div>
+<label>Expiry (MM/YY)</label><input id="fExp" placeholder="12/28"><div class="err" id="eExp"></div>
+<label>CVC</label><input id="fCvc"><div class="err" id="eCvc"></div>
+<button class="btn" type="submit">Confirm booking</button></form><div id="confirm"></div></section>
+<aside class="drawer" id="drawer"><h2>Your Plan</h2><div id="drawerItems"></div><p id="drawerTotal"></p><a href="book.html"><button class="btn">Go to checkout</button></a> <button class="btn secondary" id="closeDrawer">Close</button></aside>
+<script>document.getElementById('basketBtn').addEventListener('click',()=>{renderDrawer();document.getElementById('drawer').classList.add('open')});document.getElementById('closeDrawer').addEventListener('click',()=>document.getElementById('drawer').classList.remove('open'));
+function renderDrawer(){const b=getBasket();const w=document.getElementById('drawerItems');if(!b.length){w.innerHTML='<p>Your plan is empty.</p>';document.getElementById('drawerTotal').textContent='';return;}let total=0;w.innerHTML=b.map((i,idx)=>{const p=PROGRAMS.find(x=>x.id===i.id);const pr=packPrice(p,i.pack)*i.qty;total+=pr;return `<div><strong>${p.name}</strong><br>Pack of ${i.pack} · ${money(packPrice(p,i.pack))} <button onclick="changeQty(${idx},-1)">-</button> ${i.qty} <button onclick="changeQty(${idx},1)">+</button> <button onclick="removeItem(${idx})">Remove</button><br>${money(pr)}</div><hr>`}).join('');document.getElementById('drawerTotal').textContent='Subtotal '+money(total);}
+function changeQty(idx,d){const b=getBasket();b[idx].qty+=d;if(b[idx].qty<1)b.splice(idx,1);setBasket(b);renderDrawer();if(typeof renderCheckout==='function')renderCheckout();}
+function removeItem(idx){const b=getBasket();b.splice(idx,1);setBasket(b);renderDrawer();if(typeof renderCheckout==='function')renderCheckout();}
+updateBasketCount();</script>
+<script>
+let promoApplied=false;
+function totals(){const b=getBasket();const sub=b.reduce((s,i)=>{const p=PROGRAMS.find(x=>x.id===i.id);return s+packPrice(p,i.pack)*i.qty},0);const disc=promoApplied?Math.round(sub*10)/100:0;const taxed=sub-disc;const tax=Math.round(taxed*7)/100;return{sub:sub,disc:disc,tax:tax,total:taxed+tax};}
+function renderCheckout(){const b=getBasket();const w=document.getElementById("checkoutItems");if(!b.length){w.innerHTML="<p>Your plan is empty. Add a program pack first.</p>";}else{w.innerHTML=b.map((i,idx)=>{const p=PROGRAMS.find(x=>x.id===i.id);return `<div><strong>${p.name}</strong> · Pack of ${i.pack} · ${money(packPrice(p,i.pack))} <button onclick="changeQty(${idx},-1)">-</button> ${i.qty} <button onclick="changeQty(${idx},1)">+</button> <button onclick="removeItem(${idx})">Remove</button></div>`}).join("");}
+const t=totals();document.getElementById("totals").innerHTML=`<p>Subtotal ${money(t.sub)}</p><p>Discount ${money(t.disc)}</p><p>Tax (7 percent) ${money(t.tax)}</p><p><strong>Total ${money(t.total)}</strong></p>`;}
+document.getElementById("applyPromo").addEventListener("click",()=>{const v=document.getElementById("promo").value.trim().toUpperCase();promoApplied=(v==="REHAB10");document.getElementById("promoMsg").textContent=promoApplied?"REHAB10 applied, 10 percent off.":"That code was not recognized.";renderCheckout();});
+function err(id,msg){document.getElementById(id).textContent=msg;return !msg;}
+document.getElementById("coForm").addEventListener("submit",e=>{e.preventDefault();let ok=true;const b=getBasket();if(!b.length){alert("Your plan is empty.");return;}
+ok=err("eName",document.getElementById("fName").value.trim().length>=2?"":"Enter your full name.")&&ok;
+ok=err("eEmail",/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(document.getElementById("fEmail").value)?"":"Enter a valid email.")&&ok;
+ok=err("eAddr",document.getElementById("fAddr").value.trim()?"":"Enter your street address.")&&ok;
+ok=err("eCity",document.getElementById("fCity").value.trim()?"":"Enter your city.")&&ok;
+ok=err("eZip",/^\d{5}$/.test(document.getElementById("fZip").value.trim())?"":"Enter a 5 digit ZIP.")&&ok;
+const dv=document.getElementById("fDate").value;let dmsg="";if(!dv)dmsg="Pick a date.";else{const d=new Date(dv+"T12:00:00");const today=new Date();today.setHours(0,0,0,0);if(d<today)dmsg="That date is in the past.";else if(d.getDay()===0)dmsg="We are closed on Sundays.";}ok=err("eDate",dmsg)&&ok;
+ok=err("eCard",/^\d{16}$/.test(document.getElementById("fCard").value.replace(/\s/g,""))?"":"Enter a 16 digit card number.")&&ok;
+const ex=document.getElementById("fExp").value.trim();let emsg="";const m=ex.match(/^(\d{2})\/(\d{2})$/);if(!m)emsg="Use MM/YY.";else{const exp=new Date(2000+(+m[2]),(+m[1]),0);if(exp<new Date())emsg="That card is expired.";}ok=err("eExp",emsg)&&ok;
+ok=err("eCvc",/^\d{3,4}$/.test(document.getElementById("fCvc").value.trim())?"":"Enter the CVC.")&&ok;
+if(!ok)return;const ref="NR-"+Math.random().toString(36).slice(2,8).toUpperCase();const t=totals();const order={ref:ref,total:t.total,items:b};const orders=JSON.parse(localStorage.getItem("nr_orders")||"[]");orders.push(order);localStorage.setItem("nr_orders",JSON.stringify(orders));setBasket([]);renderCheckout();document.getElementById("confirm").innerHTML=`<div class="success"><h2>Booking confirmed</h2><p>Your reference is <strong>${ref}</strong>. Total charged in this demo checkout: ${money(t.total)}. A confirmation summary is saved in this browser.</p></div>`;});
+renderCheckout();
+</script><footer>Northline Rehab is a fictional portfolio concept. Checkout is a front end demo, no payment is taken.</footer></body></html>
